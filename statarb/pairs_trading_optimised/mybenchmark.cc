@@ -39,23 +39,23 @@ void read_prices() {
 
 
 vector<double> readCSV(const string& filename){
-   std::vector<double> prices;
+  std::vector<double> prices;
   std::ifstream file(filename);
   std::string line;
 
-  std::getline(file, line);  // Skip the header line
+  std::getline(file, line);  
 
   while (std::getline(file, line)) {
-    std::stringstream ss(line);
-    std::string value;
-    std::vector<std::string> row;
+	std::stringstream ss(line);
+	std::string value;
+	std::vector<std::string> row;
 
-    while (std::getline(ss, value, ',')) {  // Split the line by commas
-      row.push_back(value);
-    }
+	while (std::getline(ss, value, ',')) {
+  	row.push_back(value);
+	}
 
-    double adjClose = std::stod(row[5]);  // Assuming "Adj Close" is at index 5
-    prices.push_back(adjClose);
+	double adjClose = std::stod(row[5]);  
+	prices.push_back(adjClose);
   }
 
  
@@ -93,7 +93,7 @@ void pairs_trading_strategy_optimized(const std::vector<double>& stock1_prices, 
 	double sum = _mm_cvtsd_f64(_mm256_castpd256_pd128(sum_vec_total));
 	double sq_sum = _mm_cvtsd_f64(_mm256_castpd256_pd128(sq_sum_vec_total));
 
-        double mean = sum / N;
+	double mean = sum / N;
 	double stddev = std::sqrt(sq_sum / N - mean * mean);
 
 	double current_spread = stock1_prices[i] - stock2_prices[i];
@@ -102,37 +102,34 @@ void pairs_trading_strategy_optimized(const std::vector<double>& stock1_prices, 
 	spread[spread_index] = current_spread;
 
 	if(z_score > 1.0) {
-	  //counter++;
-  	//cout << z_score << endl;
+  	// Long and Short
 	} else if(z_score < -1.0) {
-  	//counter++;
-  	// Long signal
+  	// Short and Long
 	} else if (std::abs(z_score) < 0.8) {
-  	// close positions
+  	// Close positions
 	} else {
-	  //counter++;
-	  // No signal
+  	// No signal
 	}
 
 	spread_index = (spread_index + 1) % N;
   }
 
-  //cout << counter << endl;
 }
 
 
 template<size_t N>
 void BM_PairsTradingStrategyOptimized(benchmark::State& state) {
-	if (stock1_prices.empty() || stock2_prices.empty()) {
-  	  read_prices();
-	}
-	for (auto _ : state) {
-  	  pairs_trading_strategy_optimized<N>(stock1_prices, stock2_prices);
-	}
+  if (stock1_prices.empty() || stock2_prices.empty()) {
+	read_prices();
+  }
+  for (auto _ : state) {
+	pairs_trading_strategy_optimized<N>(stock1_prices, stock2_prices);
+  }
 }
 
 BENCHMARK_TEMPLATE(BM_PairsTradingStrategyOptimized, 8);
 
 BENCHMARK_MAIN();
+
 
 
