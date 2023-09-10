@@ -11,6 +11,15 @@ public:
     EventProcessor(std::shared_ptr<RingBuffer> ringBuffer, std::shared_ptr<Sequencer> sequencer);
     void run();
     void stop();
+        // Existing code
+    void halt() {
+        running_ = false;
+    }
+
+    // If you want to be able to set the Sequencer dynamically
+    void setSequencer(std::shared_ptr<Sequencer> sequencer) {
+        sequencer_ = sequencer;
+    }
 
 private:
     std::shared_ptr<RingBuffer> ringBuffer_;

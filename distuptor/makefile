@@ -7,7 +7,7 @@ CC = g++
 CFLAGS = -std=c++17 -Wall -pthread
 
 # Source Files
-SOURCES = RingBuffer.cpp Sequencer.cpp Event.cpp Producer.cpp EventProcessor.cpp Barrier.cpp YieldWaitStrategy.cpp main.cpp
+SOURCES = RingBuffer.cpp Sequencer.cpp Event.cpp Producer.cpp EventProcessor.cpp Barrier.cpp YieldWaitStrategy.cpp Disruptor.cpp main.cpp
 
 # Object Files
 OBJECTS = $(SOURCES:.cpp=.o)

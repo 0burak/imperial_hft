@@ -12,5 +12,10 @@ void Producer::onData(const std::string& data) {
     event.set(data);
     sequencer_->publish(sequence);
     //std::cout << "[Producer] Published: " << data << " at sequence: " << sequence << "\n";
+
 }
 
+
+void Producer::setSequencer(std::shared_ptr<Sequencer> sequencer) {
+    sequencer_ = sequencer;
+}

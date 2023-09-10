@@ -3,6 +3,7 @@
 #include "Producer.h"
 #include "EventProcessor.h"
 #include "Barrier.h"
+#include "Disruptor.h"
 #include "YieldWaitStrategy.h"
 #include <thread>
 #include <queue>
@@ -10,66 +11,86 @@
 #include <condition_variable>
 #include <benchmark/benchmark.h>
 
-constexpr int NUM_EVENTS = 1000000;
+static constexpr size_t kBufferSize = 1024;
+static constexpr size_t NUM_EVENTS = 1000;
 
 static void BM_Disruptor(benchmark::State& state) {
-    for (auto _ : state) {
-        // Create shared instances of the RingBuffer and Sequencer
-        auto ringBuffer = std::make_shared<RingBuffer>(NUM_EVENTS);
-        auto sequencer = std::make_shared<Sequencer>();
+  for (auto _ : state) {
 
-        // Create the producer and consumer
-        Producer producer(ringBuffer, sequencer);
-        EventProcessor consumer(ringBuffer, sequencer);
-        std::thread consumerThread([&consumer]() { consumer.run(); });
+    state.PauseTiming(); // Don't include setup time
 
-        for (int i = 0; i < NUM_EVENTS; ++i) {
-            producer.onData("Event " + std::to_string(i));
-        }
+    auto ringBuffer = std::make_shared<RingBuffer>(kBufferSize);
+    auto sequencer = std::make_shared<Sequencer>();
 
-        // Stop the consumer and wait for it to finish
-        consumer.stop();
-        consumerThread.join();
+    Producer producer(ringBuffer, sequencer);
+    EventProcessor consumer(ringBuffer, sequencer);
+
+    std::vector<EventProcessor*> processors = {&consumer};
+    std::vector<Producer*> producers = {&producer};
+
+    Disruptor disruptor(kBufferSize, processors, producers, new YieldWaitStrategy());
+
+    state.ResumeTiming();  // Start timing again
+    
+    disruptor.start();
+
+
+    for (int i = 0; i < NUM_EVENTS; ++i) {
+      producer.onData("Event " + std::to_string(i));
     }
+
+    state.PauseTiming(); 
+    disruptor.halt();
+    state.ResumeTiming();
+    
+  }
 }
 BENCHMARK(BM_Disruptor);
 
 
-static void BM_SimpleQueue(benchmark::State& state) {
-    for (auto _ : state) {
-        std::queue<std::string> queue; 
-        std::mutex mutex;
-        std::condition_variable condVar;
-        bool done = false;
+std::queue<std::string> simpleQueue;
+std::mutex queueMutex;
+std::condition_variable queueCondVar;
 
-        std::thread consumerThread([&] {
-            while (!done) {
-                std::unique_lock<std::mutex> lock(mutex);
-                while (queue.empty() && !done) {
-                    condVar.wait(lock);
-                }
-                if (!queue.empty()) {
-                    std::string event = queue.front(); 
-                    queue.pop();
-                }
-            }
-        });
-
-        for (int i = 0; i < NUM_EVENTS; ++i) {
-            std::string event = "Event " + std::to_string(i); 
-            {
-                std::lock_guard<std::mutex> lock(mutex);
-                queue.push(event);
-            }
-            condVar.notify_one();
-        }
-
-        done = true;
-        condVar.notify_one();
-        consumerThread.join();
-    }
+void SimpleProducer() {
+  for (int i = 0; i < NUM_EVENTS; ++i) {
+    std::unique_lock<std::mutex> lock(queueMutex);
+    simpleQueue.push("Event " + std::to_string(i));
+    lock.unlock();
+    queueCondVar.notify_one();
+  }
 }
-BENCHMARK(BM_SimpleQueue);
 
+void SimpleConsumer() {
+  int processedEvents = 0;
+  while (processedEvents < NUM_EVENTS) {
+    std::unique_lock<std::mutex> lock(queueMutex);
+    queueCondVar.wait(lock, [&]() { return !simpleQueue.empty(); });
+    simpleQueue.pop();
+    ++processedEvents;
+    lock.unlock();
+  }
+}
+
+static void BM_SimpleQueue(benchmark::State& state) {
+  for (auto _ : state) {
+
+    state.PauseTiming(); // Don't include setup time
+
+    std::queue<std::string> empty;
+    std::swap(simpleQueue, empty);
+
+    std::thread producerThread(SimpleProducer);
+    std::thread consumerThread(SimpleConsumer);
+
+    state.ResumeTiming(); // Resume timing
+
+    producerThread.join();
+    consumerThread.join();
+
+  }
+}
+
+BENCHMARK(BM_SimpleQueue);
 
 BENCHMARK_MAIN();

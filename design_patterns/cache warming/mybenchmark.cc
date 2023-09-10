@@ -20,7 +20,7 @@ static void BM_CacheCold(benchmark::State& state) {
     benchmark::ClobberMemory();
   }
 }
-BENCHMARK(BM_CacheCold);
+//BENCHMARK(BM_CacheCold);
 
 static void BM_CacheWarm(benchmark::State& state) {
   // Warm cache by accessing data in sequential order

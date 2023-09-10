@@ -10,6 +10,7 @@ class Producer {
 public:
     Producer(std::shared_ptr<RingBuffer> ringBuffer, std::shared_ptr<Sequencer> sequencer);
     void onData(const std::string& data);
+    void setSequencer(std::shared_ptr<Sequencer> sequencer);
 
 private:
     std::shared_ptr<RingBuffer> ringBuffer_;
