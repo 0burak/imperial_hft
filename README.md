@@ -1,4 +1,4 @@
-# Low-Latency Programming Repository for High-Frequency Trading (HFT)
+# Low-Latency Programming Repository for High-Frequency Trading (HFT) | https://www.youtube.com/@bmgunduz
 
 ## Table of Contents
 1. [Introduction](#introduction)
