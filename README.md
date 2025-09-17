@@ -13,6 +13,8 @@
 
 Welcome to the Low-Latency Programming Repository, a project aimed to serve both academics and industry practitioners in the realm of High-Frequency Trading (HFT). With a focus on optimizing latency-critical code, this repository provides comprehensive insights, techniques, design patterns, and best practices that are statistically benchmarked to mitigate latency in HFT systems.
 
+Feel free to check out my YouTube where I make videos on my experience: https://www.youtube.com/@bmgunduz
+
 ## Features
 
 - Comprehensive guide on low-latency programming techniques such as Cache Warming, Constexpr, Loop Unrolling, Lock-Free Programming, and Short-circuiting.
